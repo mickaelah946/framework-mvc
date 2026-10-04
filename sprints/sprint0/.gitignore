@@ -1,0 +1,7 @@
+build/
+dist/
+app/
+*.war
+*.class
+.idea/
+*.iml
