@@ -47,7 +47,7 @@ Mini framework MVC (equivalent Spring MVC) : `framework/` produit `framework.jar
 ## Sprint 7 : arguments des methodes (formulaire)
 - `FrontControllerServlet.buildArguments` : un argument nomme `nom` recoit le parametre de requete `nom` (champ de formulaire en POST, ou `?nom=...` en GET)
 - `ParamUtil.convert` : convertit le texte vers `String`, `int`, `long`, `double`, `float`, `short`, `boolean` (et classes enveloppes), `LocalDate`
-- Parametre absent ou champ vide : `null` pour un objet, `0` / `false` pour un type primitif ; valeur invalide : exception qui nomme l'argument
+- Parametre absent : `null` par defaut (utiliser `Integer` plutot que `int` ; un type primitif recoit `0` / `false` car Java ne peut pas lui donner `null`). Un champ de formulaire vide est envoye comme chaine vide : il donne `""` pour un `String` et `null` pour un nombre
 - `processRequest` fixe `UTF-8` avant de lire les champs (accents)
 - L'application est compilee avec `javac -parameters` (sans cette option, Java perd le nom des arguments : message d'erreur explicite)
 - Test : `/employe/form` (formulaire nom, prenom, age) puis POST `/employe/save(String nom, String prenom, int age)` ; `/employe/hello?nom=Mimi` ; `/employe/json?nom=Mimi&age=30` (JSON)
