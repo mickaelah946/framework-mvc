@@ -23,9 +23,9 @@ public class EmployeController {
 
     /** POST du formulaire : "nom", "prenom" et "age" sont reconnus automatiquement. */
     @UrlMapping(value = "employe/save", method = HttpMethod.POST)
-    public ModelAndView save(String nom, String prenom, int age) {
+    public ModelAndView save(String nom, String prenom, Integer age) {
         return new ModelAndView("employe/result")
-                .addAttribut("methode", "save(String nom, String prenom, int age)")
+                .addAttribut("methode", "save(String nom, String prenom, Integer age)")
                 .addAttribut("nom", nom)
                 .addAttribut("prenom", prenom)
                 .addAttribut("age", age);
@@ -42,7 +42,7 @@ public class EmployeController {
     /** Meme chose avec une reponse JSON (@APIREST du sprint 6) : /employe/json?nom=Mimi&age=30 */
     @APIREST
     @UrlMapping("employe/json")
-    public Map<String, Object> json(String nom, int age) {
+    public Map<String, Object> json(String nom, Integer age) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("nom", nom);
         m.put("age", age);

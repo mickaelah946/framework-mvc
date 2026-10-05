@@ -4,12 +4,12 @@ package com.app.model;
 public class Employe {
     private String nom;
     private String prenom;
-    private int age;
+    private Integer age;
 
     public Employe() {
     }
 
     public String getNom() { return nom; }
     public String getPrenom() { return prenom; }
-    public int getAge() { return age; }
+    public Integer getAge() { return age; }
 }
