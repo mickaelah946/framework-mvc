@@ -1,6 +1,6 @@
 build/
 dist/
-app/
+testapp/app/
 *.war
 *.class
 .idea/
