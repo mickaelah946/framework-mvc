@@ -1,7 +1,17 @@
-build/
-dist/
-**/testapp/app/
-*.war
-*.class
+# IDEs et éditeurs
 .idea/
+.vscode/
 *.iml
+.project
+.classpath
+.settings/
+
+# Système d'exploitation
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Logs & Tomcat
+*.log
+work/
+temp/
