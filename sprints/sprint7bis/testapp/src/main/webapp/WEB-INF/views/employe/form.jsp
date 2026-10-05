@@ -11,13 +11,16 @@
 </form>
 <h3>Sprint 7bis : @Param (champs nom et prenom dans lastName et firstName)</h3>
 <form method="post" action="<%= request.getContextPath() %>/employe/saveParam">
-    <p>Nom : <input type="text" name="nom"> Prenom : <input type="text" name="prenom">
-    <button type="submit">Valider @Param</button></p>
+    <p>Nom : <input type="text" name="nom"></p>
+    <p>Prenom : <input type="text" name="prenom"></p>
+    <p><button type="submit">Valider @Param</button></p>
 </form>
 <h3>Sprint 7bis : objet Employe rempli automatiquement</h3>
 <form method="post" action="<%= request.getContextPath() %>/employe/saveObjet">
-    <p>Nom : <input type="text" name="nom"> Prenom : <input type="text" name="prenom"> Age : <input type="number" name="age">
-    <button type="submit">Valider objet</button></p>
+    <p>Nom : <input type="text" name="nom"> 
+    <p>Prenom : <input type="text" name="prenom"><p>
+    <p>Age : <input type="number" name="age"></p>
+    <p><button type="submit">Valider objet</button></p>
 </form>
 <p>Test en GET : <a href="<%= request.getContextPath() %>/employe/hello?nom=Mimi">/employe/hello?nom=Mimi</a>
  | <a href="<%= request.getContextPath() %>/employe/json?nom=Mimi&age=30">/employe/json?nom=Mimi&amp;age=30</a>
