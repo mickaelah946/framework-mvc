@@ -5,3 +5,5 @@ testapp/app/
 *.class
 .idea/
 *.iml
+
+lib/
