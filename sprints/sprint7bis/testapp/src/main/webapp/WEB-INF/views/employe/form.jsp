@@ -17,8 +17,8 @@
 </form>
 <h3>Sprint 7bis : objet Employe rempli automatiquement</h3>
 <form method="post" action="<%= request.getContextPath() %>/employe/saveObjet">
-    <p>Nom : <input type="text" name="nom"> 
-    <p>Prenom : <input type="text" name="prenom"><p>
+    <p>Nom : <input type="text" name="nom"></p>
+    <p>Prenom : <input type="text" name="prenom"></p>
     <p>Age : <input type="number" name="age"></p>
     <p><button type="submit">Valider objet</button></p>
 </form>

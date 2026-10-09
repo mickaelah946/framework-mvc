@@ -137,20 +137,20 @@ public class FrontControllerServlet extends HttpServlet {
         Object[] args = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             Parameter p = parameters[i];
+            Param param = p.getAnnotation(Param.class);
+            String name = (param != null) ? param.value() : (p.isNamePresent() ? p.getName() : "#" + (i + 1));
             try {
                 if (!ParamUtil.isSimple(p.getType())) {
                     args[i] = ObjectBinder.bind(p.getType(), req); // 7bis : objet
                     continue;
                 }
-                Param param = p.getAnnotation(Param.class);
                 if (param == null && !p.isNamePresent()) {
                     throw new ServletException("Nom d'argument illisible pour " + route.label()
                             + " : utiliser @Param(\"...\") ou compiler l'application avec javac -parameters");
                 }
-                String name = (param != null) ? param.value() : p.getName();
                 args[i] = ParamUtil.convert(req.getParameter(name), p.getType());
             } catch (IllegalArgumentException e) {
-                throw new ServletException("Argument " + (i + 1) + " de " + route.label() + " : " + e.getMessage(), e);
+                throw new ServletException("Argument \"" + name + "\" de " + route.label() + " : " + e.getMessage(), e);
             }
         }
         return args;
