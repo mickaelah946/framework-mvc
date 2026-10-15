@@ -33,24 +33,24 @@ public class ClasseUtilitaire {
     }
 
     /**
-     * Map : url normalisee -> RouteMapping, pour chaque methode annotee @UrlMapping
+     * Map : url normalisee -> Mapping, pour chaque methode annotee @UrlMapping
      * d'un controller.
      *
      * @throws IllegalStateException si deux methodes ont la meme URL
      */
-    public static Map<String, RouteMapping> getRoutes(String basePackage) {
-        Map<String, RouteMapping> routes = new TreeMap<>();
+    public static Map<String, Mapping> getRoutes(String basePackage) {
+        Map<String, Mapping> routes = new TreeMap<>();
         for (Class<?> clazz : scanControllerClasses(basePackage)) {
             String name = controllerName(clazz);
             for (Method method : ScanAnnotation.getMethodsWithAnnotation(clazz, UrlMapping.class)) {
                 UrlMapping annotation = method.getAnnotation(UrlMapping.class);
                 String url = normalizeUrl(annotation.value());
-                RouteMapping existing = routes.get(url);
+                Mapping existing = routes.get(url);
                 if (existing != null) {
                     throw new IllegalStateException("URL en double : /" + url + " ("
                             + existing.label() + " et " + name + "->" + method.getName() + ")");
                 }
-                routes.put(url, new RouteMapping(url, name, clazz, method));
+                routes.put(url, new Mapping(url, name, clazz, method));
             }
         }
         return routes;

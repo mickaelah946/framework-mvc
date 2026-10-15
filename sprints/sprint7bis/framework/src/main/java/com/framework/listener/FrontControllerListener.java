@@ -1,7 +1,7 @@
 package com.framework.listener;
 
 import com.framework.util.ClasseUtilitaire;
-import com.framework.util.RouteMapping;
+import com.framework.util.Mapping;
 import com.framework.util.UrlMethod;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
@@ -33,7 +33,7 @@ public class FrontControllerListener implements ServletContextListener {
 
         // Une route en double leve une IllegalStateException : l'application ne demarre pas.
         Map<String, String> controllers = ClasseUtilitaire.getControllers(controllerPackage);
-        Map<UrlMethod, RouteMapping> routes = ClasseUtilitaire.getRoutes(controllerPackage);
+        Map<UrlMethod, Mapping> routes = ClasseUtilitaire.getRoutes(controllerPackage);
 
         context.setAttribute(ATTR_PACKAGE, controllerPackage);
         context.setAttribute(ATTR_CONTROLLERS, controllers);
@@ -41,7 +41,7 @@ public class FrontControllerListener implements ServletContextListener {
 
         context.log("FrontControllerListener : " + controllers.size() + " controller(s), "
                 + routes.size() + " route(s) dans " + controllerPackage);
-        for (RouteMapping route : routes.values()) {
+        for (Mapping route : routes.values()) {
             context.log("Route : " + route.getUrlMethod() + " -> " + route.label());
         }
     }

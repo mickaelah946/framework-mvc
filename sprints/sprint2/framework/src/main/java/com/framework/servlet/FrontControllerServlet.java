@@ -1,7 +1,7 @@
 package com.framework.servlet;
 
 import com.framework.util.ClasseUtilitaire;
-import com.framework.util.RouteMapping;
+import com.framework.util.Mapping;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,7 +20,7 @@ public class FrontControllerServlet extends HttpServlet {
 
     private String controllerPackage;
     private Map<String, String> controllers = new TreeMap<>();
-    private Map<String, RouteMapping> routes = new TreeMap<>();
+    private Map<String, Mapping> routes = new TreeMap<>();
 
     @Override
     public void init() throws ServletException {
@@ -63,7 +63,7 @@ public class FrontControllerServlet extends HttpServlet {
             return;
         }
 
-        RouteMapping route = routes.get(key);
+        Mapping route = routes.get(key);
         if (route == null) {
             throw new ServletException("Aucune methode pour l'URL /" + key
                     + ". URLs disponibles : " + describeRoutes());
@@ -86,7 +86,7 @@ public class FrontControllerServlet extends HttpServlet {
         for (Map.Entry<String, String> c : controllers.entrySet()) {
             sb.append("<li><b>").append(esc(c.getValue())).append("</b> : ").append(esc(c.getKey())).append("<ul>");
             boolean any = false;
-            for (RouteMapping r : routes.values()) {
+            for (Mapping r : routes.values()) {
                 if (r.getControllerClass().getName().equals(c.getKey())) {
                     any = true;
                     sb.append("<li>/").append(esc(r.getUrl())).append(" &rarr; ").append(esc(r.label())).append("</li>");
@@ -106,7 +106,7 @@ public class FrontControllerServlet extends HttpServlet {
             return "aucune";
         }
         StringJoiner joiner = new StringJoiner(", ");
-        for (RouteMapping r : routes.values()) {
+        for (Mapping r : routes.values()) {
             joiner.add("/" + r.getUrl() + " (" + r.label() + ")");
         }
         return joiner.toString();

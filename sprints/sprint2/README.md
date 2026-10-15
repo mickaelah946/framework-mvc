@@ -16,7 +16,7 @@ Mini framework MVC (equivalent Spring MVC) : `framework/` produit `framework.jar
 ## Sprint 2 : @UrlMapping
 - `@UrlMapping("emp/list")` : associe une URL a une methode d'un controller
 - `ScanAnnotation.getMethodsWithAnnotation` : methodes d'une classe qui portent une annotation
-- `RouteMapping` (classe + methode) et map url -> RouteMapping remplie par `ClasseUtilitaire.getRoutes`
+- `Mapping` (classe + methode) et map url -> Mapping remplie par `ClasseUtilitaire.getRoutes`
 - URL inconnue : exception listant toutes les routes disponibles
 
 ## Build et deploiement (sans Maven)
