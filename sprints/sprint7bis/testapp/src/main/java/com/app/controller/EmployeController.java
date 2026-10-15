@@ -1,5 +1,6 @@
 package com.app.controller;
 
+import com.app.model.Departement;
 import com.app.model.Employe;
 import com.framework.annotation.APIREST;
 import com.framework.annotation.Controller;
@@ -8,7 +9,9 @@ import com.framework.annotation.Param;
 import com.framework.annotation.UrlMapping;
 import com.framework.model.ModelAndView;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Sprint 7 et 7bis : les arguments des methodes sont remplis avec les champs du formulaire (meme nom). */
@@ -75,5 +78,58 @@ public class EmployeController {
     @UrlMapping("employe/objet")
     public Employe objet(Employe employe) {
         return employe;
+    }
+
+    // ---------- Sprint 7bis : objet dans un objet, liste d'objets, deux objets ----------
+
+    /** Objet dans l'objet : champs nom, prenom, age, adresse.rue, adresse.ville, langues[0], langues[1]. */
+    @UrlMapping(value = "employe/saveImbrique", method = HttpMethod.POST)
+    public ModelAndView saveImbrique(Employe employe) {
+        List<String> lignes = new ArrayList<>();
+        lignes.add("employe = " + employe);
+        lignes.add("adresse = " + employe.getAdresse() + (employe.getAdresse() == null ? " (aucun champ adresse.*)" : ""));
+        return new ModelAndView("employe/binding")
+                .addAttribut("methode", "saveImbrique(Employe employe)")
+                .addAttribut("lignes", lignes);
+    }
+
+    /** Liste d'objets : employes[0].nom, employes[0].age, employes[1].nom, ... */
+    @UrlMapping(value = "employe/saveListe", method = HttpMethod.POST)
+    public ModelAndView saveListe(List<Employe> employes) {
+        List<String> lignes = new ArrayList<>();
+        for (int i = 0; i < employes.size(); i++) {
+            lignes.add("employes[" + i + "] = " + employes.get(i));
+        }
+        if (lignes.isEmpty()) {
+            lignes.add("(liste vide : aucun champ employes[i].xxx)");
+        }
+        return new ModelAndView("employe/binding")
+                .addAttribut("methode", "saveListe(List<Employe> employes)")
+                .addAttribut("lignes", lignes);
+    }
+
+    /** Deux objets : employe.nom et departement.nom ne se melangent pas. */
+    @UrlMapping(value = "employe/saveDeux", method = HttpMethod.POST)
+    public ModelAndView saveDeux(Employe employe, Departement departement) {
+        List<String> lignes = new ArrayList<>();
+        lignes.add("employe = " + employe);
+        lignes.add("departement = " + departement);
+        return new ModelAndView("employe/binding")
+                .addAttribut("methode", "saveDeux(Employe employe, Departement departement)")
+                .addAttribut("lignes", lignes);
+    }
+
+    /** JSON : /employe/imbrique?nom=Mimi&adresse.rue=Lalana&adresse.ville=Tana&langues[0]=fr&langues[1]=mg */
+    @APIREST
+    @UrlMapping("employe/imbrique")
+    public Employe imbrique(Employe employe) {
+        return employe;
+    }
+
+    /** JSON : /employe/liste?employes[0].nom=A&employes[1].nom=B */
+    @APIREST
+    @UrlMapping("employe/liste")
+    public List<Employe> liste(List<Employe> employes) {
+        return employes;
     }
 }

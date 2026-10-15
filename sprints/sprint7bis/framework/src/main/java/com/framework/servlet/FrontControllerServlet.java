@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.TreeMap;
@@ -138,11 +139,16 @@ public class FrontControllerServlet extends HttpServlet {
         for (int i = 0; i < parameters.length; i++) {
             Parameter p = parameters[i];
             try {
+                Param param = p.getAnnotation(Param.class);
                 if (!ParamUtil.isSimple(p.getType())) {
-                    args[i] = ObjectBinder.bind(p.getType(), req); // 7bis : objet
+                    // 7bis : objet (avec objets imbriques), liste d'objets, ou plusieurs objets.
+                    // Le nom de l'argument (ou @Param) sert de prefixe : employe.nom, employes[0].nom...
+                    String name = (param != null) ? param.value() : (p.isNamePresent() ? p.getName() : "");
+                    args[i] = List.class.isAssignableFrom(p.getType())
+                            ? ObjectBinder.bindList(p.getParameterizedType(), name, req)
+                            : ObjectBinder.bind(p.getType(), name, req);
                     continue;
                 }
-                Param param = p.getAnnotation(Param.class);
                 if (param == null && !p.isNamePresent()) {
                     throw new ServletException("Nom d'argument illisible pour " + route.label()
                             + " : utiliser @Param(\"...\") ou compiler l'application avec javac -parameters");

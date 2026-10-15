@@ -10,7 +10,7 @@ public class ParamUtil {
      * Convertit le texte recu vers le type demande.
      * Parametre absent (null) : null pour un objet, 0 / false pour un type primitif.
      * Champ vide : meme chose, sauf pour String qui garde la chaine vide.
-     * Types pris en charge : String, int, long, double, float, short, boolean (et leurs classes enveloppes), LocalDate.
+     * Types pris en charge : String, int, long, double, float, short, boolean (et leurs classes enveloppes), LocalDate, enum.
      */
     public static Object convert(String raw, Class<?> type) {
         if (type == String.class) {
@@ -42,7 +42,10 @@ public class ParamUtil {
             if (type == LocalDate.class) {
                 return LocalDate.parse(text);
             }
-        } catch (NumberFormatException | DateTimeParseException e) {
+            if (type.isEnum()) {
+                return toEnum(type, text);
+            }
+        } catch (NumberFormatException | DateTimeParseException | IllegalStateException e) {
             throw new IllegalArgumentException("valeur \"" + raw + "\" invalide pour le type " + type.getSimpleName());
         }
         throw new IllegalArgumentException("type d'argument non supporte : " + type.getName());
@@ -52,7 +55,23 @@ public class ParamUtil {
     public static boolean isSimple(Class<?> type) {
         return type == String.class || type.isPrimitive() || type == LocalDate.class
                 || type == Integer.class || type == Long.class || type == Double.class || type == Float.class
-                || type == Short.class || type == Boolean.class;
+                || type == Short.class || type == Boolean.class || type.isEnum();
+    }
+
+    /** Constante d'enum a partir du texte (casse exacte, sinon majuscules). */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Object toEnum(Class<?> type, String text) {
+        for (Object constant : type.getEnumConstants()) {
+            if (((Enum) constant).name().equals(text)) {
+                return constant;
+            }
+        }
+        for (Object constant : type.getEnumConstants()) {
+            if (((Enum) constant).name().equalsIgnoreCase(text)) {
+                return constant;
+            }
+        }
+        throw new IllegalStateException("valeur inconnue pour l'enum");
     }
 
     /** "true", "on" (case a cocher), "1", "oui", "yes". */

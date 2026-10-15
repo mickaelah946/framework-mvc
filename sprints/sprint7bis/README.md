@@ -57,6 +57,12 @@ Mini framework MVC (equivalent Spring MVC) : `framework/` produit `framework.jar
 - Argument de type objet (`Employe`) : `ObjectBinder.bind` cree l'objet (constructeur sans argument) et remplit chaque attribut avec le parametre de requete du meme nom (attributs de type simple ; parametre absent : valeur par defaut de l'objet)
 - `ParamUtil.isSimple` : distingue un type simple (convertit depuis un parametre) d'un objet (rempli par `ObjectBinder`)
 - Test : `/employe/form` (formulaires `@Param` et objet), `/employe/saveParam`, `/employe/saveObjet`, `/employe/objet?nom=Mimi&prenom=Rakoto&age=30` (objet en JSON)
+- Objet dans un objet : `adresse.rue`, `adresse.ville` remplissent l'attribut `adresse` de `Employe` (prefixe = nom de l'attribut, jusqu'a 5 niveaux)
+- Liste d'objets : `List<Employe> employes` est remplie avec `employes[0].nom`, `employes[1].nom`, ... (les trous d'indices sont acceptes) ; liste de types simples : `langues[0]`, `langues[1]` ou plusieurs champs `langues` de meme nom
+- Deux objets dans la meme methode : `save(Employe employe, Departement departement)` lit `employe.nom` et `departement.nom` ; le prefixe est le nom de l'argument (ou `@Param`, avec `-parameters` sinon)
+- Sans prefixe dans le formulaire (`nom`), l'attribut est rempli quand meme (comportement de base) ; des que le formulaire utilise le prefixe (`employe.nom`), seuls les champs prefixes sont lus
+- `ParamUtil` lit aussi les `enum` (`HOMME` ou `homme`) ; valeur invalide : l'exception donne le chemin (`attribut "employe.age"`)
+- Test : `/employe/form` (nouveaux formulaires), `/employe/saveImbrique`, `/employe/saveListe`, `/employe/saveDeux`, `/employe/imbrique?nom=Mimi&adresse.rue=Lalana&adresse.ville=Tana&langues[0]=fr` et `/employe/liste?employes[0].nom=A&employes[1].nom=B` (JSON)
 
 ## Build et deploiement (sans Maven)
     .\tomcat-start.bat
