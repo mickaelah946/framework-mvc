@@ -22,7 +22,6 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.TreeMap;
@@ -136,17 +135,23 @@ public class FrontControllerServlet extends HttpServlet {
     private Object[] buildArguments(Mapping route, HttpServletRequest req) throws ServletException {
         Parameter[] parameters = route.getMethod().getParameters();
         Object[] args = new Object[parameters.length];
+        int objectCount = 0; // plusieurs objets : le prefixe (employe.nom) devient obligatoire
+        for (Parameter q : parameters) {
+            if (!ParamUtil.isSimple(q.getType()) && !ObjectBinder.isMultiple(q.getType())) {
+                objectCount++;
+            }
+        }
         for (int i = 0; i < parameters.length; i++) {
             Parameter p = parameters[i];
             try {
                 Param param = p.getAnnotation(Param.class);
                 if (!ParamUtil.isSimple(p.getType())) {
-                    // 7bis : objet (avec objets imbriques), liste d'objets, ou plusieurs objets.
+                    // 7bis : objet (avec objets imbriques), List / Set / tableau, ou plusieurs objets.
                     // Le nom de l'argument (ou @Param) sert de prefixe : employe.nom, employes[0].nom...
                     String name = (param != null) ? param.value() : (p.isNamePresent() ? p.getName() : "");
-                    args[i] = List.class.isAssignableFrom(p.getType())
-                            ? ObjectBinder.bindList(p.getParameterizedType(), name, req)
-                            : ObjectBinder.bind(p.getType(), name, req);
+                    args[i] = ObjectBinder.isMultiple(p.getType())
+                            ? ObjectBinder.bindMultiple(p.getParameterizedType(), p.getType(), name, req)
+                            : ObjectBinder.bind(p.getType(), name, req, objectCount > 1);
                     continue;
                 }
                 if (param == null && !p.isNamePresent()) {

@@ -60,7 +60,9 @@ Mini framework MVC (equivalent Spring MVC) : `framework/` produit `framework.jar
 - Objet dans un objet : `adresse.rue`, `adresse.ville` remplissent l'attribut `adresse` de `Employe` (prefixe = nom de l'attribut, jusqu'a 5 niveaux)
 - Liste d'objets : `List<Employe> employes` est remplie avec `employes[0].nom`, `employes[1].nom`, ... (les trous d'indices sont acceptes) ; liste de types simples : `langues[0]`, `langues[1]` ou plusieurs champs `langues` de meme nom
 - Deux objets dans la meme methode : `save(Employe employe, Departement departement)` lit `employe.nom` et `departement.nom` ; le prefixe est le nom de l'argument (ou `@Param`, avec `-parameters` sinon)
+- `List`, `Set` et tableaux (`Employe[]`, `int[]`, `String[]`) se lisent de la meme facon, en argument comme en attribut ; une autre collection (`TreeSet`, `Queue`) donne une erreur claire
 - Sans prefixe dans le formulaire (`nom`), l'attribut est rempli quand meme (comportement de base) ; des que le formulaire utilise le prefixe (`employe.nom`), seuls les champs prefixes sont lus
+- Methode avec plusieurs objets : le prefixe est obligatoire, aucune valeur sans prefixe n'est partagee entre deux objets (sans `-parameters` ni `@Param`, erreur claire)
 - `ParamUtil` lit aussi les `enum` (`HOMME` ou `homme`) ; valeur invalide : l'exception donne le chemin (`attribut "employe.age"`)
 - Test : `/employe/form` (nouveaux formulaires), `/employe/saveImbrique`, `/employe/saveListe`, `/employe/saveDeux`, `/employe/imbrique?nom=Mimi&adresse.rue=Lalana&adresse.ville=Tana&langues[0]=fr` et `/employe/liste?employes[0].nom=A&employes[1].nom=B` (JSON)
 

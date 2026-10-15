@@ -2,12 +2,15 @@ package com.framework.util;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -22,11 +25,13 @@ import java.util.regex.Pattern;
  *   - objet dans l'objet       : employe.adresse.rue
  *   - liste d'objets           : employes[0].nom, employes[1].nom, ...
  *   - liste de types simples   : tags[0], tags[1]  (ou plusieurs champs "tags" de meme nom)
+ *   - List, Set et tableaux (Employe[], int[]) se lisent de la meme facon
  *   - deux objets en argument  : employe.nom et departement.nom (chacun garde son prefixe)
  *
  * Sans prefixe dans le formulaire ("nom"), l'attribut est rempli quand meme (sprint 7bis de base),
  * sauf si le formulaire utilise deja le prefixe de l'argument (employe.xxx) : dans ce cas seuls les
- * champs prefixes sont lus, pour que deux objets aux attributs de meme nom ne se melangent pas.
+ * champs prefixes sont lus. Quand la methode recoit plusieurs objets, le prefixe est obligatoire
+ * (aucune valeur sans prefixe n'est partagee entre deux objets : pas d'ambiguite).
  * Un attribut sans parametre correspondant garde sa valeur par defaut.
  */
 public class ObjectBinder {
@@ -41,9 +46,39 @@ public class ObjectBinder {
 
     /** Objet rempli avec le prefixe donne (nom de l'argument ou @Param) ; prefixe vide : champs sans prefixe. */
     public static Object bind(Class<?> type, String name, HttpServletRequest req) {
+        return bind(type, name, req, false);
+    }
+
+    /**
+     * Comme bind ; avec strict = true (methode qui recoit plusieurs objets) le prefixe est obligatoire :
+     * les champs sans prefixe ne sont lus pour aucun des objets.
+     */
+    public static Object bind(Class<?> type, String name, HttpServletRequest req, boolean strict) {
         String prefix = name == null ? "" : name;
-        boolean allowBare = prefix.isEmpty() || !hasParamStartingWith(req, prefix + ".");
+        if (strict && prefix.isEmpty()) {
+            throw new IllegalArgumentException("la methode recoit plusieurs objets : utiliser @Param(\"...\") "
+                    + "ou compiler l'application avec javac -parameters (prefixe " + type.getSimpleName()
+                    + ".champ obligatoire)");
+        }
+        boolean allowBare = !strict && (prefix.isEmpty() || !hasParamStartingWith(req, prefix + "."));
         return bindObject(type, prefix, allowBare, 0, req);
+    }
+
+    /** List, Set ou tableau (argument ou attribut) : vrai si bindMultiple sait le lire. */
+    public static boolean isMultiple(Class<?> type) {
+        return type.isArray() || Collection.class.isAssignableFrom(type);
+    }
+
+    /**
+     * List&lt;Employe&gt;, Set&lt;String&gt;, Employe[], int[]... : le type des elements vient du type generique
+     * (ou du type du tableau). Retourne le conteneur du type demande, vide si le formulaire n'envoie rien.
+     */
+    public static Object bindMultiple(Type genericType, Class<?> rawType, String name, HttpServletRequest req) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("nom d'argument illisible pour la liste : utiliser @Param(\"...\") "
+                    + "ou compiler l'application avec javac -parameters");
+        }
+        return adapt(rawType, bindList(elementType(genericType, rawType, name), name, 0, req), name);
     }
 
     /** Liste (List&lt;Employe&gt;, List&lt;String&gt;...) : elementType vient du type generique de l'argument. */
@@ -52,7 +87,7 @@ public class ObjectBinder {
             throw new IllegalArgumentException("nom d'argument illisible pour la liste : utiliser @Param(\"...\") "
                     + "ou compiler l'application avec javac -parameters");
         }
-        return bindList(elementType(listType, name), name, 0, req);
+        return bindList(elementType(listType, List.class, name), name, 0, req);
     }
 
     // ---------- objets ----------
@@ -92,13 +127,13 @@ public class ObjectBinder {
             }
             return raw == null ? null : convert(raw, type, key);
         }
-        if (List.class.isAssignableFrom(type)) {
-            Class<?> item = elementType(field.getGenericType(), key);
+        if (isMultiple(type)) {
+            Class<?> item = elementType(field.getGenericType(), type, key);
             List<Object> list = bindList(item, key, depth + 1, req);
             if (list.isEmpty() && tryBare) {
                 list = bindList(item, bare, depth + 1, req);
             }
-            return list.isEmpty() ? null : list;
+            return list.isEmpty() ? null : adapt(type, list, key);
         }
         // objet dans l'objet : employe.adresse.rue
         if (hasParamStartingWith(req, key + ".")) {
@@ -169,16 +204,38 @@ public class ObjectBinder {
         return false;
     }
 
-    /** Type des elements de List&lt;T&gt; ; erreur si la liste n'a pas de type (List sans &lt;T&gt;). */
-    private static Class<?> elementType(Type listType, String name) {
-        if (listType instanceof ParameterizedType) {
-            Type[] args = ((ParameterizedType) listType).getActualTypeArguments();
+    /** Type des elements de List&lt;T&gt; / Set&lt;T&gt; ou d'un tableau ; erreur si le type est inconnu (List sans &lt;T&gt;). */
+    private static Class<?> elementType(Type genericType, Class<?> rawType, String name) {
+        if (rawType.isArray()) {
+            return rawType.getComponentType();
+        }
+        if (genericType instanceof ParameterizedType) {
+            Type[] args = ((ParameterizedType) genericType).getActualTypeArguments();
             if (args.length == 1 && args[0] instanceof Class) {
                 return (Class<?>) args[0];
             }
         }
         throw new IllegalArgumentException("liste \"" + name + "\" : le type des elements est inconnu "
                 + "(ecrire List<Employe> et non List)");
+    }
+
+    /** Met les elements dans le conteneur demande : tableau, List/Collection (ArrayList) ou Set (LinkedHashSet). */
+    private static Object adapt(Class<?> type, List<Object> items, String name) {
+        if (type.isArray()) {
+            Object array = Array.newInstance(type.getComponentType(), items.size());
+            for (int i = 0; i < items.size(); i++) {
+                Array.set(array, i, items.get(i));
+            }
+            return array;
+        }
+        if (type.isAssignableFrom(ArrayList.class)) {
+            return items;
+        }
+        if (type.isAssignableFrom(LinkedHashSet.class)) {
+            return new LinkedHashSet<>(items);
+        }
+        throw new IllegalArgumentException("\"" + name + "\" : type de collection non supporte ("
+                + type.getSimpleName() + ") ; utiliser List, Set ou un tableau");
     }
 
     private static Object convert(String raw, Class<?> type, String key) {
