@@ -85,6 +85,34 @@ Comment :
     - Du coté developpeur aussi, si le type est String mais si c'est une autre type on appel la fonction toJSON du framework
 
 
+### Sprint 7 : Paramètres des méthodes de contrôleur
+Objectif :
+    - Quand le FrontController appelle une méthode, il lui donne les arguments venant de la requête (formulaire en POST ou ?nom=... en GET)
+    - Valeur par défaut null si le paramètre n'existe pas dans la requête
+
+Comment :
+    - Lire les arguments de la méthode par réflexion (getParameters), le nom de l'argument = le nom du paramètre de la requête (compilation avec javac -parameters)
+    - Même nom : on prend la valeur, on la convertit vers le type de l'argument (String, int, long, double, float, short, boolean, LocalDate) et on l'utilise dans invoke
+    - Paramètre absent : null (utiliser Integer plutôt que int, un type primitif reçoit 0 / false car Java ne peut pas lui donner null)
+    - Argument de type objet : exception (au sprint 7)
+    - req.setCharacterEncoding("UTF-8") avant la lecture des champs
+    - Test : formulaire (nom, prenom, age) vers employe/save, employe/hello?nom=Mimi, employe/json?nom=Mimi&age=30
+
+### Sprint 7bis : @Param et arguments objet
+Objectif :
+    - Choisir le champ lu avec une annotation, et recevoir un objet rempli automatiquement
+
+Comment :
+    - Annotation @Param("champ") sur un argument : le framework lit le paramètre de requête "champ" (sans -parameters pour cet argument)
+    - Argument de type objet : le framework crée l'objet (constructeur sans argument) et remplit chaque attribut avec le paramètre de même nom (ObjectBinder)
+    - Les attributs static et final sont ignorés
+    - Test : employe/saveParam (@Param), employe/saveObjet (objet Employe), employe/objet?nom=Mimi&prenom=Rakoto&age=30 (JSON)
+    - Objet dans un objet : adresse.rue et adresse.ville remplissent l'attribut adresse (prefixe = nom de l'attribut, 5 niveaux au maximum)
+    - Liste d'objets : List<Employe> employes avec employes[0].nom, employes[1].nom (trous d'indices acceptes) ; List, Set et tableaux se lisent de la meme facon
+    - Plusieurs objets dans la meme methode : employe.nom et departement.nom, le prefixe est obligatoire (aucune valeur sans prefixe n'est partagee)
+    - Test : employe/saveImbrique, employe/saveListe, employe/saveDeux, employe/imbrique (JSON), employe/liste (JSON)
+
+
 ### Upload ana fichier    
 ### Gestion de Session
 ### Authaurisation

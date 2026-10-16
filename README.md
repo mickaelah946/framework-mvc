@@ -13,7 +13,7 @@ Le cahier des charges est dans `TODO.md`.
 | 4 | `FrontControllerListener` |
 | 5 | `ModelAndView` |
 | 6 | `@APIREST` (JSON) |
-| 7 | ` Sprint 7 : arguments des methodes (formulaire)` |
-| 7bis | `Sprint 7bis : @Param et arguments objet` |
+| 7 | Arguments des methodes (formulaire), `ParamUtil` |
+| 7bis | `@Param`, `ObjectBinder` (objets, objets imbriques, listes, `Set`, tableaux, plusieurs objets) |
 
 Build et deploiement d'un sprint, depuis son dossier : `.\deploy.bat` (Tomcat 11 installe dans `C:\apache-tomcat-11.0.23`).
