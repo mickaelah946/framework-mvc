@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+    <context-param>
+        <param-name>controllerPackage</param-name>
+        <param-value>com.app.controller</param-value>
+    </context-param>
+
+    <!-- Sprint 8 : dossier ou MapFile.save() enregistre les fichiers recus (chemin absolu, ou avec ${variable}) -->
+    <context-param>
+        <param-name>upload-dir</param-name>
+        <param-value>${catalina.base}/uploads/testapp</param-value>
+    </context-param>
+
+    <listener>
+        <listener-class>com.framework.listener.FrontControllerListener</listener-class>
+    </listener>
+
+    <servlet>
+        <servlet-name>frontController</servlet-name>
+        <servlet-class>com.framework.servlet.FrontControllerServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+        <multipart-config>
+            <max-file-size>10485760</max-file-size>        <!-- 10 Mo par fichier -->
+            <max-request-size>52428800</max-request-size>  <!-- 50 Mo par envoi -->
+            <file-size-threshold>1048576</file-size-threshold>
+        </multipart-config>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>frontController</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+</web-app>
