@@ -16,12 +16,12 @@ Mini framework MVC (equivalent Spring MVC) : `framework/` produit `framework.jar
 ## Sprint 2 : @UrlMapping
 - `@UrlMapping("emp/list")` : associe une URL a une methode d'un controller
 - `ScanAnnotation.getMethodsWithAnnotation` : methodes d'une classe qui portent une annotation
-- `RouteMapping` (classe + methode) et map url -> RouteMapping remplie par `ClasseUtilitaire.getRoutes`
+- `Mapping` (classe + methode) et map url -> Mapping remplie par `ClasseUtilitaire.getRoutes`
 - URL inconnue : exception listant toutes les routes disponibles
 
 ## Sprint 3 : GET / POST et invocation par reflexion
 - `@UrlMapping(value = "/list", method = HttpMethod.POST)` : meme URL en GET et en POST
-- `UrlMethod` (url + methode HTTP, `equals`/`hashCode`) sert de cle : map UrlMethod -> RouteMapping
+- `UrlMethod` (url + methode HTTP, `equals`/`hashCode`) sert de cle : map UrlMethod -> Mapping
 - Sprint 3 bis : la methode du controller est invoquee par reflexion, sa valeur de retour est affichee
 
 ## Sprint 4 : FrontControllerListener

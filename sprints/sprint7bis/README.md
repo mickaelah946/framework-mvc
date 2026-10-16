@@ -16,12 +16,12 @@ Mini framework MVC (equivalent Spring MVC) : `framework/` produit `framework.jar
 ## Sprint 2 : @UrlMapping
 - `@UrlMapping("emp/list")` : associe une URL a une methode d'un controller
 - `ScanAnnotation.getMethodsWithAnnotation` : methodes d'une classe qui portent une annotation
-- `RouteMapping` (classe + methode) et map url -> RouteMapping remplie par `ClasseUtilitaire.getRoutes`
+- `Mapping` (classe + methode) et map url -> Mapping remplie par `ClasseUtilitaire.getRoutes`
 - URL inconnue : exception listant toutes les routes disponibles
 
 ## Sprint 3 : GET / POST et invocation par reflexion
 - `@UrlMapping(value = "/list", method = HttpMethod.POST)` : meme URL en GET et en POST
-- `UrlMethod` (url + methode HTTP, `equals`/`hashCode`) sert de cle : map UrlMethod -> RouteMapping
+- `UrlMethod` (url + methode HTTP, `equals`/`hashCode`) sert de cle : map UrlMethod -> Mapping
 - Sprint 3 bis : la methode du controller est invoquee par reflexion, sa valeur de retour est affichee
 
 ## Sprint 4 : FrontControllerListener
@@ -47,7 +47,7 @@ Mini framework MVC (equivalent Spring MVC) : `framework/` produit `framework.jar
 ## Sprint 7 : arguments des methodes (formulaire)
 - `FrontControllerServlet.buildArguments` : un argument nomme `nom` recoit le parametre de requete `nom` (champ de formulaire en POST, ou `?nom=...` en GET)
 - `ParamUtil.convert` : convertit le texte vers `String`, `int`, `long`, `double`, `float`, `short`, `boolean` (et classes enveloppes), `LocalDate`
-- Parametre absent ou champ vide : `null` pour un objet, `0` / `false` pour un type primitif ; valeur invalide : exception qui nomme l'argument
+- Parametre absent : `null` par defaut (utiliser `Integer` plutot que `int` ; un type primitif recoit `0` / `false` car Java ne peut pas lui donner `null`). Un champ de formulaire vide est envoye comme chaine vide : il donne `""` pour un `String` et `null` pour un nombre
 - `processRequest` fixe `UTF-8` avant de lire les champs (accents)
 - L'application est compilee avec `javac -parameters` (sans cette option, Java perd le nom des arguments : message d'erreur explicite)
 - Test : `/employe/form` (formulaire nom, prenom, age) puis POST `/employe/save(String nom, String prenom, int age)` ; `/employe/hello?nom=Mimi` ; `/employe/json?nom=Mimi&age=30` (JSON)
@@ -57,6 +57,14 @@ Mini framework MVC (equivalent Spring MVC) : `framework/` produit `framework.jar
 - Argument de type objet (`Employe`) : `ObjectBinder.bind` cree l'objet (constructeur sans argument) et remplit chaque attribut avec le parametre de requete du meme nom (attributs de type simple ; parametre absent : valeur par defaut de l'objet)
 - `ParamUtil.isSimple` : distingue un type simple (convertit depuis un parametre) d'un objet (rempli par `ObjectBinder`)
 - Test : `/employe/form` (formulaires `@Param` et objet), `/employe/saveParam`, `/employe/saveObjet`, `/employe/objet?nom=Mimi&prenom=Rakoto&age=30` (objet en JSON)
+- Objet dans un objet : `adresse.rue`, `adresse.ville` remplissent l'attribut `adresse` de `Employe` (prefixe = nom de l'attribut, jusqu'a 5 niveaux)
+- Liste d'objets : `List<Employe> employes` est remplie avec `employes[0].nom`, `employes[1].nom`, ... (les trous d'indices sont acceptes) ; liste de types simples : `langues[0]`, `langues[1]` ou plusieurs champs `langues` de meme nom
+- Deux objets dans la meme methode : `save(Employe employe, Departement departement)` lit `employe.nom` et `departement.nom` ; le prefixe est le nom de l'argument (ou `@Param`, avec `-parameters` sinon)
+- `List`, `Set` et tableaux (`Employe[]`, `int[]`, `String[]`) se lisent de la meme facon, en argument comme en attribut ; une autre collection (`TreeSet`, `Queue`) donne une erreur claire
+- Sans prefixe dans le formulaire (`nom`), l'attribut est rempli quand meme (comportement de base) ; des que le formulaire utilise le prefixe (`employe.nom`), seuls les champs prefixes sont lus
+- Methode avec plusieurs objets : le prefixe est obligatoire, aucune valeur sans prefixe n'est partagee entre deux objets (sans `-parameters` ni `@Param`, erreur claire)
+- `ParamUtil` lit aussi les `enum` (`HOMME` ou `homme`) ; valeur invalide : l'exception donne le chemin (`attribut "employe.age"`)
+- Test : `/employe/form` (nouveaux formulaires), `/employe/saveImbrique`, `/employe/saveListe`, `/employe/saveDeux`, `/employe/imbrique?nom=Mimi&adresse.rue=Lalana&adresse.ville=Tana&langues[0]=fr` et `/employe/liste?employes[0].nom=A&employes[1].nom=B` (JSON)
 
 ## Build et deploiement (sans Maven)
     .\tomcat-start.bat

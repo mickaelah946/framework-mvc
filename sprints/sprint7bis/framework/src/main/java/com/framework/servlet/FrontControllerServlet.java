@@ -9,7 +9,7 @@ import com.framework.annotation.Param;
 import com.framework.util.JsonUtil;
 import com.framework.util.ObjectBinder;
 import com.framework.util.ParamUtil;
-import com.framework.util.RouteMapping;
+import com.framework.util.Mapping;
 import com.framework.util.UrlMethod;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -30,7 +30,7 @@ public class FrontControllerServlet extends HttpServlet {
 
     private String controllerPackage;
     private Map<String, String> controllers = new TreeMap<>();
-    private Map<UrlMethod, RouteMapping> routes = new TreeMap<>();
+    private Map<UrlMethod, Mapping> routes = new TreeMap<>();
 
     /** Les controllers et les routes sont deja scannes par le FrontControllerListener. */
     @Override
@@ -39,7 +39,7 @@ public class FrontControllerServlet extends HttpServlet {
         ServletContext context = getServletContext();
         controllerPackage = (String) context.getAttribute(FrontControllerListener.ATTR_PACKAGE);
         controllers = (Map<String, String>) context.getAttribute(FrontControllerListener.ATTR_CONTROLLERS);
-        routes = (Map<UrlMethod, RouteMapping>) context.getAttribute(FrontControllerListener.ATTR_ROUTES);
+        routes = (Map<UrlMethod, Mapping>) context.getAttribute(FrontControllerListener.ATTR_ROUTES);
 
         if (controllers == null || routes == null) {
             throw new ServletException("Routes absentes du contexte : declarer "
@@ -76,7 +76,7 @@ public class FrontControllerServlet extends HttpServlet {
         }
 
         UrlMethod wanted = new UrlMethod(url, httpMethod);
-        RouteMapping route = routes.get(wanted);
+        Mapping route = routes.get(wanted);
         if (route == null) {
             throw new ServletException("Aucune methode pour " + wanted + "." + otherMethodsHint(url, httpMethod)
                     + " Routes disponibles : " + describeRoutes());
@@ -113,7 +113,7 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     /** Invoque par reflexion la methode du controller, avec les arguments pris dans la requete (Sprint 7). */
-    private Object invoke(RouteMapping route, HttpServletRequest req) throws ServletException {
+    private Object invoke(Mapping route, HttpServletRequest req) throws ServletException {
         Method method = route.getMethod();
         Object[] args = buildArguments(route, req);
         try {
@@ -132,17 +132,28 @@ public class FrontControllerServlet extends HttpServlet {
      * Sprint 7bis : @Param("nom") choisit le parametre a lire ; un argument de type objet est cree
      * et ses attributs sont remplis avec les parametres du meme nom.
      */
-    private Object[] buildArguments(RouteMapping route, HttpServletRequest req) throws ServletException {
+    private Object[] buildArguments(Mapping route, HttpServletRequest req) throws ServletException {
         Parameter[] parameters = route.getMethod().getParameters();
         Object[] args = new Object[parameters.length];
+        int objectCount = 0; // plusieurs objets : le prefixe (employe.nom) devient obligatoire
+        for (Parameter q : parameters) {
+            if (!ParamUtil.isSimple(q.getType()) && !ObjectBinder.isMultiple(q.getType())) {
+                objectCount++;
+            }
+        }
         for (int i = 0; i < parameters.length; i++) {
             Parameter p = parameters[i];
             try {
+                Param param = p.getAnnotation(Param.class);
                 if (!ParamUtil.isSimple(p.getType())) {
-                    args[i] = ObjectBinder.bind(p.getType(), req); // 7bis : objet
+                    // 7bis : objet (avec objets imbriques), List / Set / tableau, ou plusieurs objets.
+                    // Le nom de l'argument (ou @Param) sert de prefixe : employe.nom, employes[0].nom...
+                    String name = (param != null) ? param.value() : (p.isNamePresent() ? p.getName() : "");
+                    args[i] = ObjectBinder.isMultiple(p.getType())
+                            ? ObjectBinder.bindMultiple(p.getParameterizedType(), p.getType(), name, req)
+                            : ObjectBinder.bind(p.getType(), name, req, objectCount > 1);
                     continue;
                 }
-                Param param = p.getAnnotation(Param.class);
                 if (param == null && !p.isNamePresent()) {
                     throw new ServletException("Nom d'argument illisible pour " + route.label()
                             + " : utiliser @Param(\"...\") ou compiler l'application avec javac -parameters");
@@ -176,7 +187,7 @@ public class FrontControllerServlet extends HttpServlet {
         for (Map.Entry<String, String> c : controllers.entrySet()) {
             sb.append("<li><b>").append(esc(c.getValue())).append("</b> : ").append(esc(c.getKey())).append("<ul>");
             boolean any = false;
-            for (RouteMapping r : routes.values()) {
+            for (Mapping r : routes.values()) {
                 if (!r.getControllerClass().getName().equals(c.getKey())) {
                     continue;
                 }
@@ -206,7 +217,7 @@ public class FrontControllerServlet extends HttpServlet {
             return "aucune";
         }
         StringJoiner joiner = new StringJoiner(", ");
-        for (RouteMapping r : routes.values()) {
+        for (Mapping r : routes.values()) {
             joiner.add(r.getUrlMethod() + " (" + r.label() + ")");
         }
         return joiner.toString();

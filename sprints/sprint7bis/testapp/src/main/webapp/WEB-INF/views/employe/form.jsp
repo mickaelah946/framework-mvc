@@ -1,30 +1,49 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<html>
-<head><title>Formulaire employe</title></head>
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><title>Employé</title>
+<style>body{font-family:Arial,sans-serif;max-width:420px;margin:2rem auto;padding:0 1rem}input{display:block;margin:.3rem 0 1rem;padding:.4rem;width:100%;box-sizing:border-box}button{padding:.5rem 1.2rem}.nul{color:#c00;font-style:italic}</style>
+</head>
 <body>
-<h2>Formulaire employe (Sprint 7 et 7bis)</h2>
-<form method="post" action="<%= request.getContextPath() %>/employe/save">
-    <p>Nom : <input type="text" name="nom"></p>
-    <p>Prenom : <input type="text" name="prenom"></p>
-    <p>Age : <input type="number" name="age"></p>
-    <p><button type="submit">Valider</button></p>
-</form>
-<h3>Sprint 7bis : @Param (champs nom et prenom dans lastName et firstName)</h3>
+<h2>Avec @Param</h2>
 <form method="post" action="<%= request.getContextPath() %>/employe/saveParam">
-    <p>Nom : <input type="text" name="nom"></p>
-    <p>Prenom : <input type="text" name="prenom"></p>
-    <p><button type="submit">Valider @Param</button></p>
+    Nom <input type="text" name="nom">
+    Prénom <input type="text" name="prenom">
+    <button type="submit">Valider</button>
 </form>
-<h3>Sprint 7bis : objet Employe rempli automatiquement</h3>
+<h2>Avec un objet Employe</h2>
 <form method="post" action="<%= request.getContextPath() %>/employe/saveObjet">
-    <p>Nom : <input type="text" name="nom"> 
-    <p>Prenom : <input type="text" name="prenom"><p>
-    <p>Age : <input type="number" name="age"></p>
-    <p><button type="submit">Valider objet</button></p>
+    Nom <input type="text" name="nom">
+    Prénom <input type="text" name="prenom">
+    Âge <input type="number" name="age">
+    <button type="submit">Valider</button>
 </form>
-<p>Test en GET : <a href="<%= request.getContextPath() %>/employe/hello?nom=Mimi">/employe/hello?nom=Mimi</a>
- | <a href="<%= request.getContextPath() %>/employe/json?nom=Mimi&age=30">/employe/json?nom=Mimi&amp;age=30</a>
- | <a href="<%= request.getContextPath() %>/employe/objet?nom=Mimi&prenom=Rakoto&age=30">/employe/objet?nom=Mimi&amp;prenom=Rakoto&amp;age=30</a></p>
-<p><a href="<%= request.getContextPath() %>/">Retour a l'accueil</a></p>
+<h2>Objet dans un objet (adresse) et liste (langues)</h2>
+<form method="post" action="<%= request.getContextPath() %>/employe/saveImbrique">
+    Nom <input type="text" name="nom">
+    Prénom <input type="text" name="prenom">
+    Âge <input type="number" name="age">
+    Rue <input type="text" name="adresse.rue">
+    Ville <input type="text" name="adresse.ville">
+    Langue 1 <input type="text" name="langues[0]">
+    Langue 2 <input type="text" name="langues[1]">
+    <button type="submit">Valider</button>
+</form>
+<h2>Liste d'objets (employes[0], employes[1])</h2>
+<form method="post" action="<%= request.getContextPath() %>/employe/saveListe">
+    Nom 1 <input type="text" name="employes[0].nom">
+    Âge 1 <input type="number" name="employes[0].age">
+    Nom 2 <input type="text" name="employes[1].nom">
+    Âge 2 <input type="number" name="employes[1].age">
+    <button type="submit">Valider</button>
+</form>
+<h2>Deux objets (employe et departement)</h2>
+<form method="post" action="<%= request.getContextPath() %>/employe/saveDeux">
+    Nom employé <input type="text" name="employe.nom">
+    Âge employé <input type="number" name="employe.age">
+    Nom département <input type="text" name="departement.nom">
+    Effectif <input type="number" name="departement.effectif">
+    <button type="submit">Valider</button>
+</form>
 </body>
 </html>

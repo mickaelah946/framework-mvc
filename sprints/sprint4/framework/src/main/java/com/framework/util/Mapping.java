@@ -5,14 +5,14 @@ import com.framework.annotation.HttpMethod;
 import java.lang.reflect.Method;
 
 /** Lien entre une cle (URL + methode HTTP), un controller et une methode. */
-public class RouteMapping {
+public class Mapping {
 
     private final UrlMethod urlMethod;
     private final String controllerName;
     private final Class<?> controllerClass;
     private final Method method;
 
-    public RouteMapping(UrlMethod urlMethod, String controllerName, Class<?> controllerClass, Method method) {
+    public Mapping(UrlMethod urlMethod, String controllerName, Class<?> controllerClass, Method method) {
         this.urlMethod = urlMethod;
         this.controllerName = controllerName;
         this.controllerClass = controllerClass;

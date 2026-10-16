@@ -33,24 +33,24 @@ public class ClasseUtilitaire {
     }
 
     /**
-     * Map : UrlMethod (url + methode HTTP) -> RouteMapping (controller + methode).
+     * Map : UrlMethod (url + methode HTTP) -> Mapping (controller + methode).
      * La meme URL peut exister en GET et en POST.
      *
      * @throws IllegalStateException si deux methodes ont la meme URL avec la meme methode HTTP
      */
-    public static Map<UrlMethod, RouteMapping> getRoutes(String basePackage) {
-        Map<UrlMethod, RouteMapping> routes = new TreeMap<>();
+    public static Map<UrlMethod, Mapping> getRoutes(String basePackage) {
+        Map<UrlMethod, Mapping> routes = new TreeMap<>();
         for (Class<?> clazz : scanControllerClasses(basePackage)) {
             String name = controllerName(clazz);
             for (Method method : ScanAnnotation.getMethodsWithAnnotation(clazz, UrlMapping.class)) {
                 UrlMapping annotation = method.getAnnotation(UrlMapping.class);
                 UrlMethod key = new UrlMethod(annotation.value(), annotation.method());
-                RouteMapping existing = routes.get(key);
+                Mapping existing = routes.get(key);
                 if (existing != null) {
                     throw new IllegalStateException("Route en double : " + key + " ("
                             + existing.label() + " et " + name + "->" + method.getName() + ")");
                 }
-                routes.put(key, new RouteMapping(key, name, clazz, method));
+                routes.put(key, new Mapping(key, name, clazz, method));
             }
         }
         return routes;
