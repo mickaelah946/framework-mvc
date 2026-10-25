@@ -113,17 +113,6 @@ Comment :
     - Test : employe/saveImbrique, employe/saveListe, employe/saveDeux, employe/imbrique (JSON), employe/liste (JSON)
 
 
-### Sprint 8 : Upload de fichiers
-Objectif :
-    - Recevoir les fichiers d'un formulaire (enctype="multipart/form-data") dans la méthode d'action : un fichier est un objet (nom, extension, tableau de bytes)
-
-Comment :
-    - Classe modèle MapFile : nom du fichier, extension, bytes[]
-    - Argument MapFile (même nom que le champ file) ou Map<String, MapFile> : tous les fichiers du formulaire (clé = nom du champ), ou Map<String, byte[]> : seulement les octets
-    - Binding : si le nom d'un champ file correspond à un attribut de l'objet (ex. rectoCIN, versoCIN) et que cet attribut est de type MapFile, le framework crée MapFile(nom, extension, bytes[]) ; List<MapFile> pour plusieurs fichiers dans le même champ
-    - Extension : lue dans le nom du fichier envoyé (dernier point)
-    - web.xml : <multipart-config> dans le servlet (max-file-size, max-request-size, file-size-threshold) et context-param upload-dir (dossier où MapFile.save() enregistre les fichiers)
-    - Test : upload/form (saveFichiers, saveObjet, saveMap, saveOctets, saveListe, info en JSON)
-
+### Upload ana fichier    
 ### Gestion de Session
 ### Authaurisation

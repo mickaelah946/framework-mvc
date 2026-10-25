@@ -15,6 +15,5 @@ Le cahier des charges est dans `TODO.md`.
 | 6 | `@APIREST` (JSON) |
 | 7 | Arguments des methodes (formulaire), `ParamUtil` |
 | 7bis | `@Param`, `ObjectBinder` (objets, objets imbriques, listes, `Set`, tableaux, plusieurs objets) |
-| 8 | Upload de fichiers : `MapFile`, `multipart-config`, `upload-dir` |
 
 Build et deploiement d'un sprint, depuis son dossier : `.\deploy.bat` (Tomcat 11 installe dans `C:\apache-tomcat-11.0.23`).
