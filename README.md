@@ -16,5 +16,6 @@ Le cahier des charges est dans `TODO.md`.
 | 7 | Arguments des methodes (formulaire), `ParamUtil` |
 | 7bis | `@Param`, `ObjectBinder` (objets, objets imbriques, listes, `Set`, tableaux, plusieurs objets) |
 | 8 | `MapFile`, upload multipart, configuration du dossier de stockage |
+| 9 | `MaSession` (copie de `HttpSession`, synchronisee apres l'appel), gestion de session |
 
 Build et deploiement d'un sprint, depuis son dossier : `.\deploy.bat` (Tomcat 11 installe dans `C:\apache-tomcat-11.0.23`).
