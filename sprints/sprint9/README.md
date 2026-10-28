@@ -16,9 +16,13 @@ public ModelAndView compteur(MaSession session) {
 
 L'application de démonstration expose :
 
+- `GET /session/form` : formulaire nom, prénom et âge ; affiche l'identifiant de session pour comparer les navigateurs ;
+- `POST /session/enregistrer` : lie les champs à un `Employe` et le conserve dans la session ;
 - `GET /session/compteur` : incrémente un compteur stocké dans la session ;
-- `GET /session/etat` : relit les données de la session ;
-- `POST /session/fin` : supprime l'attribut du compteur de démonstration.
+- `GET /session/etat` : relit le compteur et l'employé de la session ;
+- `POST /session/fin` : supprime les attributs de démonstration.
+
+Pour comparer les sessions, ouvre `/testapp/session/form` dans le premier navigateur et enregistre un employé. Sur la page résultat, copie le lien « Tester dans un autre navigateur » et ouvre-le dans le second navigateur : son ID sera différent et aucun employé du premier navigateur n'y sera enregistré. Enregistre ensuite un autre employé dans le second pour comparer les deux sessions.
 
 ## Build et déploiement
 

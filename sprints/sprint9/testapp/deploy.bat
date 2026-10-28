@@ -1,6 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
-rem Compile l'application de test, cree app\testapp.war et le copie dans Tomcat 11
+rem Compile l'application, cree app\testapp.war et deploie le dossier extrait dans Tomcat 11
 cd /d "%~dp0"
 
 set "APP_NAME=testapp"
@@ -52,9 +52,9 @@ if errorlevel 1 (
 
 if exist "%TOMCAT_DIR%\webapps\%APP_NAME%.war" del /f /q "%TOMCAT_DIR%\webapps\%APP_NAME%.war"
 if exist "%TOMCAT_DIR%\webapps\%APP_NAME%" rmdir /s /q "%TOMCAT_DIR%\webapps\%APP_NAME%"
-copy /Y "app\%APP_NAME%.war" "%TOMCAT_DIR%\webapps\" >nul
+xcopy "build\war\*" "%TOMCAT_DIR%\webapps\%APP_NAME%\" /E /I /Y /Q >nul
 if errorlevel 1 (
-    echo Erreur : copie vers Tomcat refusee.
+    echo Erreur : deploiement des fichiers vers Tomcat refuse.
     exit /b 1
 )
 
