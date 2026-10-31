@@ -1,28 +1,70 @@
-# Framework MVC — Sprint 9
+# Framework MVC — Sprint 10
 
-## Gestion de session HTTP
+## Authentification : annotation `@Auth`
 
-Le sprint 9 reprend le framework et l'application de démonstration du sprint 8, y compris l'upload multipart. Il ajoute une copie `MaSession` de la session HTTP au contrôleur. Après l'appel, le framework recopie les changements dans `HttpSession` : les attributs supprimés sont retirés et les attributs présents sont ajoutés ou mis à jour.
+Le sprint 10 reprend le framework du sprint 9 (arguments, objets, upload, `MaSession`) et ajoute la protection des routes. `@Auth` se pose sur une méthode ou sur toute une classe de contrôleur (`@Target` : `TYPE` et `METHOD`).
 
 ```java
-@UrlMapping("session/compteur")
-public ModelAndView compteur(MaSession session) {
-    session.setAttribute("visites", 1);
-    return new ModelAndView("session/result");
+@Controller("auth")
+public class AuthController {
+
+    @UrlMapping("auth/public")            // aucune annotation : route publique
+    public ModelAndView publique(MaSession session) { ... }
+
+    @Auth                                 // il faut être connecté
+    @UrlMapping("auth/profil")
+    public ModelAndView profil(MaSession session) { ... }
 }
+
+@Controller("espace")
+@Auth                                     // toutes les méthodes de la classe sont protégées
+public class EspaceController { ... }
 ```
 
-`MaSession.from(HttpSession)` copie l'id, les attributs et les clés initiales. `getAttribute`, `setAttribute` et `removeAttribute` manipulent cette copie ; `flushTo(HttpSession)` applique les différences. Le framework crée une session si la requête n'en possède pas encore. Les autres arguments (`@Param`, objets, fichiers et types simples) gardent leur traitement.
+Si la méthode et la classe portent chacune `@Auth`, c'est celle de la **méthode** qui est utilisée.
 
-L'application de démonstration expose :
+### Configuration (`web.xml`)
 
-- `GET /session/form` : formulaire nom, prénom et âge ; affiche l'identifiant de session pour comparer les navigateurs ;
-- `POST /session/enregistrer` : lie les champs à un `Employe` et le conserve dans la session ;
-- `GET /session/compteur` : incrémente un compteur stocké dans la session ;
-- `GET /session/etat` : relit le compteur et l'employé de la session ;
-- `POST /session/fin` : supprime les attributs de démonstration.
+Le développeur déclare le nom de l'attribut de session qui contient l'utilisateur connecté :
 
-Pour comparer les sessions, ouvre `/testapp/session/form` dans le premier navigateur et enregistre un employé. Sur la page résultat, copie le lien « Tester dans un autre navigateur » et ouvre-le dans le second navigateur : son ID sera différent et aucun employé du premier navigateur n'y sera enregistré. Enregistre ensuite un autre employé dans le second pour comparer les deux sessions.
+```xml
+<context-param>
+    <param-name>session-user-name</param-name>
+    <param-value>user</param-value>
+</context-param>
+```
+
+`session-log-name` est accepté comme autre nom du même paramètre. Le `FrontControllerListener` lit ce paramètre au démarrage et le range dans le `ServletContext` (`framework.sessionUserName`). Si une route porte `@Auth` et que le paramètre est absent, **l'application refuse de démarrer** (`IllegalStateException`) : on évite ainsi une route « protégée » qui serait ouverte par oubli.
+
+### Vérification (`FrontControllerServlet`)
+
+Avant d'appeler la méthode du contrôleur, `checkAuthorization(route, req, resp)` :
+
+1. cherche `@Auth` sur la méthode, puis sur la classe ; sans `@Auth` la route est publique (retour `true`) ;
+2. récupère la session **sans la créer** (`getSession(false)`) : un visiteur anonyme n'ouvre donc pas de session ;
+3. regarde si l'attribut de session `session-user-name` existe ;
+4. sinon appelle `handleUnauthorized` : statut **401** (`HttpServletResponse.SC_UNAUTHORIZED`), et la méthode du contrôleur n'est pas exécutée (retour `false`).
+
+La réponse 401 est en **JSON** pour une méthode `@APIREST` ou quand le client demande du JSON (en-tête `Accept: application/json` sans `text/html`), et en **HTML** sinon :
+
+```json
+{"status":401,"error":"Unauthorized","message":"Authentification requise pour GET /auth/api"}
+```
+
+La page d'accueil du framework (liste des routes) reste publique.
+
+### Application de test
+
+`testapp` ajoute `AuthController` et `EspaceController`. Connexion de démonstration : `/auth/login` range le nom saisi dans la session sous la clé `user`.
+
+| URL | Protection |
+|---|---|
+| `GET /auth/login`, `POST /auth/connecter`, `POST /auth/deconnecter`, `GET /auth/public` | aucune |
+| `GET /auth/profil` | `@Auth` sur la méthode |
+| `GET /auth/api` | `@Auth` + `@APIREST` (401 en JSON) |
+| `GET /espace/membres`, `GET /espace/messages` | `@Auth` sur la classe |
+
+Pour tester : ouvrir `/auth/profil` sans être connecté (erreur 401), se connecter sur `/auth/login`, puis rouvrir `/auth/profil`. Après `POST /auth/deconnecter`, la page est de nouveau refusée.
 
 ## Build et déploiement
 

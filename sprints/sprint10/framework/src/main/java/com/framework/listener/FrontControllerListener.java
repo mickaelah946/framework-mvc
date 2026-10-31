@@ -1,5 +1,6 @@
 package com.framework.listener;
 
+import com.framework.util.AuthUtil;
 import com.framework.util.ClasseUtilitaire;
 import com.framework.util.Mapping;
 import com.framework.util.UploadUtil;
@@ -27,6 +28,12 @@ public class FrontControllerListener implements ServletContextListener {
     public static final String PARAM_UPLOAD_DIR = "upload-dir";
     public static final String ATTR_UPLOAD_DIR = "framework.uploadDir";
 
+    /** Sprint 10 : nom de l'attribut de session qui contient l'utilisateur connecte (context-param de web.xml). */
+    public static final String PARAM_SESSION_USER = "session-user-name";
+    /** Autre nom accepte pour le meme context-param. */
+    public static final String PARAM_SESSION_LOG = "session-log-name";
+    public static final String ATTR_SESSION_USER = "framework.sessionUserName";
+
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         ServletContext context = sce.getServletContext();
@@ -52,6 +59,19 @@ public class FrontControllerListener implements ServletContextListener {
             context.log("Dossier d'upload : " + resolved);
         } else {
             context.log("Aucun upload-dir dans web.xml : MapFile.save() sera refuse");
+        }
+
+        // Sprint 10 : cle de session de l'utilisateur connecte ; obligatoire des qu'une route porte @Auth
+        String userKey = context.getInitParameter(PARAM_SESSION_USER);
+        if (userKey == null || userKey.isBlank()) {
+            userKey = context.getInitParameter(PARAM_SESSION_LOG);
+        }
+        if (userKey != null && !userKey.isBlank()) {
+            context.setAttribute(ATTR_SESSION_USER, userKey.trim());
+            context.log("Attribut de session de l'utilisateur : " + userKey.trim());
+        } else if (AuthUtil.anyProtected(routes.values())) {
+            throw new IllegalStateException("@Auth est utilise mais le context-param \"" + PARAM_SESSION_USER
+                    + "\" est absent de web.xml (nom de l'attribut de session qui contient l'utilisateur connecte)");
         }
 
         context.log("FrontControllerListener : " + controllers.size() + " controller(s), "

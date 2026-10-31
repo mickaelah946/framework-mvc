@@ -1,11 +1,13 @@
 package com.framework.servlet;
 
 import com.framework.annotation.APIREST;
+import com.framework.annotation.Auth;
 import com.framework.annotation.HttpMethod;
 import com.framework.listener.FrontControllerListener;
 import com.framework.model.MapFile;
 import com.framework.model.MaSession;
 import com.framework.model.ModelAndView;
+import com.framework.util.AuthUtil;
 import com.framework.util.ClasseUtilitaire;
 import com.framework.annotation.Param;
 import com.framework.util.JsonUtil;
@@ -19,12 +21,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.TreeMap;
@@ -34,6 +38,8 @@ public class FrontControllerServlet extends HttpServlet {
     private String controllerPackage;
     private Map<String, String> controllers = new TreeMap<>();
     private Map<UrlMethod, Mapping> routes = new TreeMap<>();
+    /** Sprint 10 : nom de l'attribut de session qui contient l'utilisateur connecte. */
+    private String sessionUserName;
 
     /** Les controllers et les routes sont deja scannes par le FrontControllerListener. */
     @Override
@@ -48,6 +54,7 @@ public class FrontControllerServlet extends HttpServlet {
             throw new ServletException("Routes absentes du contexte : declarer "
                     + "com.framework.listener.FrontControllerListener dans web.xml");
         }
+        sessionUserName = (String) context.getAttribute(FrontControllerListener.ATTR_SESSION_USER);
         log("Routes recuperees depuis le contexte : " + routes.size());
     }
 
@@ -85,6 +92,11 @@ public class FrontControllerServlet extends HttpServlet {
                     + " Routes disponibles : " + describeRoutes());
         }
 
+        // Sprint 10 : @Auth -> 401 si personne n'est connecte ; la methode du controller n'est alors pas appelee
+        if (!checkAuthorization(route, req, resp)) {
+            return;
+        }
+
         // Sprint 6 : methode annotee @APIREST -> JSON, sans requestDispatcher
         APIREST apiRest = route.getMethod().getAnnotation(APIREST.class);
         if (apiRest != null) {
@@ -113,6 +125,67 @@ public class FrontControllerServlet extends HttpServlet {
 
         throw new ServletException("Type de retour invalide pour " + route.label()
                 + " : ModelAndView attendu, trouve " + (result == null ? "null" : result.getClass().getName()));
+    }
+
+    /**
+     * Sprint 10 : vrai si la route peut etre appelee. Une route sans @Auth est publique. Sinon la session doit
+     * exister et contenir l'attribut de l'utilisateur (session-user-name), sinon reponse 401 et retour false.
+     * @Auth de la methode prime sur celui de la classe.
+     */
+    protected boolean checkAuthorization(Mapping route, HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, ServletException {
+        Auth auth = AuthUtil.find(route);
+        if (auth == null) {
+            return true;
+        }
+        if (sessionUserName == null) {
+            throw new ServletException(route.label() + " porte @Auth mais le context-param \""
+                    + FrontControllerListener.PARAM_SESSION_USER + "\" n'est pas configure dans web.xml");
+        }
+        HttpSession session = req.getSession(false); // pas de creation de session pour un visiteur anonyme
+        Object user = (session == null) ? null : session.getAttribute(sessionUserName);
+        if (user == null) {
+            handleUnauthorized(req, resp, route);
+            return false;
+        }
+        return true;
+    }
+
+    /** Sprint 10 : reponse 401 (personne n'est connecte), en JSON pour une API, en HTML sinon. */
+    protected void handleUnauthorized(HttpServletRequest req, HttpServletResponse resp, Mapping route) throws IOException {
+        sendError(req, resp, route, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized",
+                "Authentification requise pour " + route.getUrlMethod());
+    }
+
+    /** Reponse d'erreur : JSON si la route est @APIREST ou si le client demande du JSON, page HTML sinon. */
+    private void sendError(HttpServletRequest req, HttpServletResponse resp, Mapping route, int status,
+                           String error, String message) throws IOException {
+        resp.setStatus(status);
+        PrintWriter out;
+        if (wantsJson(req, route)) {
+            resp.setContentType("application/json;charset=UTF-8");
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("status", status);
+            body.put("error", error);
+            body.put("message", message);
+            out = resp.getWriter();
+            out.print(JsonUtil.toJson(body));
+        } else {
+            resp.setContentType("text/html;charset=UTF-8");
+            out = resp.getWriter();
+            out.println("<h1>" + status + " " + esc(error) + "</h1>");
+            out.println("<p>" + esc(message) + "</p>");
+        }
+        out.flush();
+    }
+
+    /** Vrai pour une methode @APIREST, ou quand le client prefere le JSON au HTML (en-tete Accept). */
+    private static boolean wantsJson(HttpServletRequest req, Mapping route) {
+        if (route.getMethod().isAnnotationPresent(APIREST.class)) {
+            return true;
+        }
+        String accept = req.getHeader("Accept");
+        return accept != null && accept.contains("application/json") && !accept.contains("text/html");
     }
 
     /** Invoque par reflexion la methode du controller, avec les arguments pris dans la requete (Sprint 7). */
